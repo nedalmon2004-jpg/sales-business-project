@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daily Sales History</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<header class="header">
+  <div class="brand">
+    <h1>Business Sales</h1>
+    <p>History + daily graph</p>
+  </div>
+  <nav class="nav">
+    <a href="index.html" >Dashboard</a>
+    <a href="items" onclick="return false;">Items</a>
+    <a href="#" id="logout">Logout</a>
+  </nav>
+</header>
+
+<div class="container">
+  <div class="card">
+    <h2 style="margin-top:0;">Daily Sales History</h2>
+    <p style="color:rgba(0,0,0,.65);font-weight:800;">Total amount made each day</p>
+
+    <div class="row" style="margin-top:12px;">
+      <label>From
+        <input id="from" type="date"/>
+      </label>
+      <label>To
+        <input id="to" type="date"/>
+      </label>
+      <button class="btn" type="button" id="loadBtn">Load</button>
+    </div>
+
+    <div style="margin-top:16px;">
+      <div style="font-weight:1000;margin-bottom:10px;">Graph (last 14 days)</div>
+      <canvas id="chart" height="140" style="width:100%;background:rgba(255,255,255,.55);border:1px solid rgba(0,0,0,.08);border-radius:14px;"></canvas>
+      <div style="color:rgba(0,0,0,.6);font-weight:900;font-size:12px;margin-top:8px;">
+        Uses simple Canvas bars (no external libs).
+      </div>
+    </div>
+
+    <div style="margin-top:18px;">
+      <div class="table">
+        <div class="thead" style="grid-template-columns:1.1fr 1fr 1fr;">
+          <div>Date</div>
+          <div>Total Revenue</div>
+          <div>Items Lines Qty</div>
+        </div>
+        <div class="tbody" id="historyTable"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="app.js"></script>
+<script>
+  // offline admin check
+  const LS_ADMIN = 'bs_admin_ok_v1';
+  function isAdmin(){ return localStorage.getItem(LS_ADMIN)==='1'; }
+  if(!isAdmin()){
+    window.location.href='auth.html';
+  }
+
+  const canvas = document.getElementById('chart');
+  const ctx = canvas.getContext('2d');
+
+  function todayISO(){
+    const d = new Date();
+    const pad=n=>String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  }
+
+  function dateToObj(iso){
+    return new Date(iso+'T00:00:00');
+  }
+
+  function getSales(){
+    try{ return JSON.parse(localStorage.getItem('bs_sales_v1')||'[]'); }catch{ return []; }
+  }
+
+  function aggregateDaily(sales){
+    // {date:{total, linesQty}}
+    const map = new Map();
+    for(const s of sales){
+      const date = s.saleDate;
+      const prev = map.get(date) || { total:0, linesQty:0 };
+      prev.total += Number(s.total||0);
+      for(const l of (s.lines||[])) prev.linesQty += Number(l.qty||0);
+      map.set(date, prev);
+    }
+    return map;
+  }
+
+  function computeRange(fromISO,toISO){
+    const sales = getSales();
+    const daily = aggregateDaily(sales);
+
+    const from = dateToObj(fromISO);
+    const to = dateToObj(toISO);
+    const out = [];
+
+    const keys = Array.from(daily.keys()).sort();
+    for(const k of keys){
+      const d = dateToObj(k);
+      if(d>=from && d<=to) out.push({date:k, ...daily.get(k)});
+    }
+    return out;
+  }
+
+  function drawChart(lastDays){
+    const w = canvas.width = canvas.parentElement.clientWidth;
+    const h = canvas.height = 140;
+    ctx.clearRect(0,0,w,h);
+
+    // background grid
+    ctx.fillStyle='rgba(255,234,112,.18)';
+    ctx.fillRect(0,0,w,h);
+
+    const max = Math.max(1, ...lastDays.map(x=>x.total));
+    const padX = 20;
+    const padY = 16;
+    const barW = (w - padX*2)/Math.max(1,lastDays.length);
+
+    ctx.strokeStyle='rgba(0,0,0,.12)';
+    ctx.lineWidth=1;
+    for(let i=0;i<5;i++){
+      const y = padY + (h-padY*2)*(i/4);
+      ctx.beginPath();
+      ctx.moveTo(padX, y);
+      ctx.lineTo(w-padX, y);
+      ctx.stroke();
+    }
+
+    lastDays.forEach((x,idx)=>{
+      const barH = (h-padY*2)*(x.total/max);
+      const x0 = padX + idx*barW + barW*0.15;
+      const y0 = h - padY - barH;
+
+      ctx.fillStyle='rgba(255,183,0,.75)';
+      ctx.fillRect(x0, y0, barW*0.7, barH);
+
+      // label (day)
+      const parts = x.date.split('-');
+      const label = parts[2] || '';
+      ctx.fillStyle='rgba(0,0,0,.72)';
+      ctx.font='800 11px Arial';
+      ctx.textAlign='center';
+      ctx.fillText(label, x0 + barW*0.35, h-6);
+    });
+  }
+
+  function renderTable(rows){
+    const box = document.getElementById('historyTable');
+    if(rows.length===0){
+      box.innerHTML = '<div style="padding:12px 14px;color:rgba(0,0,0,.65);font-weight:800;">No sales found.</div>';
+      return;
+    }
+    box.innerHTML = rows.map(r=>`
+      <div class="trow" style="grid-template-columns:1.1fr 1fr 1fr;">
+        <div style="font-weight:900;">${r.date}</div>
+        <div>${Number(r.total||0).toLocaleString()}</div>
+        <div>${Number(r.linesQty||0)}</div>
+      </div>
+    `).join('');
+  }
+
+  function load(){
+    const from = document.getElementById('from').value;
+    const to = document.getElementById('to').value;
+
+    const rows = computeRange(from,to);
+    renderTable(rows);
+
+    // last 14 days graph
+    const sales = getSales();
+    const daily = aggregateDaily(sales);
+    const t = dateToObj(to);
+    const last = [];
+    for(let i=13;i>=0;i--){
+      const d = new Date(t);
+      d.setDate(d.getDate()-i);
+      const iso = d.toISOString().slice(0,10);
+      const v = daily.get(iso) || {total:0, linesQty:0};
+      last.push({date:iso, total:v.total, linesQty:v.linesQty});
+    }
+    drawChart(last);
+  }
+
+  // init inputs
+  (function(){
+    const to = todayISO();
+    document.getElementById('to').value = to;
+    // default from = 30 days ago
+    const d = new Date(to+'T00:00:00');
+    d.setDate(d.getDate()-30);
+    document.getElementById('from').value = d.toISOString().slice(0,10);
+    document.getElementById('loadBtn').addEventListener('click', load);
+    load();
+  })();
+
+  document.getElementById('logout').addEventListener('click',(e)=>{
+    e.preventDefault();
+    localStorage.removeItem('bs_admin_ok_v1');
+    window.location.href='auth.html';
+  });
+</script>
+</body>
+</html>
+

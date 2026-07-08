@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<header class="header">
+  <div class="brand">
+    <h1>Business Sales</h1>
+    <p>Admin login</p>
+  </div>
+  <nav class="nav">
+    <a href="#" data-page-link="dashboard">Dashboard</a>
+  </nav>
+</header>
+
+<div class="container">
+  <div class="card" style="max-width:520px;margin:30px auto;">
+    <h2 style="margin-top:0;">Login</h2>
+    <form id="loginForm" style="margin-top:14px;display:flex;flex-direction:column;gap:12px;">
+      <label>Admin code
+        <input name="code" required placeholder="e.g. 1234"/>
+      </label>
+      <button class="btn" type="submit">Login</button>
+      <div id="err" style="color:#b10000;font-weight:900;display:none;"></div>
+      <div style="color:rgba(0,0,0,.6);font-weight:800;font-size:12px;">
+
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="app.js"></script>
+<script>
+  const form = document.getElementById('loginForm');
+  const err = document.getElementById('err');
+
+  // offline admin auth flag in localStorage
+  const LS_ADMIN = 'bs_admin_ok_v1';
+
+  function setErr(t){
+    err.textContent = t;
+    err.style.display = 'block';
+  }
+
+  form.addEventListener('submit',(e)=>{
+    e.preventDefault();
+    err.style.display = 'none';
+
+    const fd = new FormData(form);
+    const code = String(fd.get('code')||'').trim();
+
+    if(code === '6767'){
+      localStorage.setItem(LS_ADMIN,'1');
+      toast('Admin logged in');
+      window.location.href = 'index.html';
+    }else{
+      setErr('Wrong code');
+    }
+  });
+</script>
+</body>
+</html>
+

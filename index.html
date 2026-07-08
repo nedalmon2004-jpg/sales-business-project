@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Business Sales & Stock</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <header class="header">
+    <div class="brand">
+      <h1>Business Sales & Stock</h1>
+      <p>Yellow • Super Easy</p>
+    </div>
+    <nav class="nav">
+      <a href="#" data-page="dashboard">Dashboard</a>
+      <a href="#" data-page="items">Items & Stock</a>
+      <a href="#" data-page="sales">Add Sales</a>
+      <a href="history.html">History</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div id="page-dashboard" class="page">
+      <div class="grid">
+        <div class="card">
+          <h2 style="margin:0;">Sales for Today</h2>
+          <div style="color:rgba(0,0,0,.65);font-weight:700;margin-top:6px;" id="todayLabel">...</div>
+
+          <div class="kpis" style="margin-top:14px;">
+            <div class="kpi">
+              <div class="v" id="todayTotal">0</div>
+              <div class="l">Total Revenue</div>
+            </div>
+            <div class="kpi">
+              <div class="v" id="todayLines">0</div>
+              <div class="l">Items Lines Count</div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;">
+            <div style="font-weight:900;margin-bottom:10px;">Today Items</div>
+            <div class="table">
+              <div class="thead" style="grid-template-columns:1.3fr 1fr 1fr 1fr;">
+                <div>Item</div>
+                <div>Qty</div>
+                <div>Unit Price</div>
+                <div>Line Total</div>
+              </div>
+              <div class="tbody" id="todayLinesTable"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 style="margin:0;">Quick Actions</h2>
+          <p style="color:rgba(0,0,0,.65);font-weight:700;">One screen per task.</p>
+
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">
+            <button class="btn" type="button" data-go="sales">Add Today Sales</button>
+            <button class="btn secondary" type="button" data-go="items">Update Items Stock/Price</button>
+          </div>
+
+          <div class="kpi" style="margin-top:16px;">
+            <div style="font-weight:900;">History is in</div>
+            <div style="margin-top:8px;">
+              <a style="color:inherit; font-weight:900;" href="history.html">History</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-items" class="page hidden">
+      <div class="grid">
+        <div class="card">
+          <h2 style="margin-top:0;">Add/Update Item</h2>
+          <form id="itemForm" style="margin-top:12px;display:flex;flex-direction:column;gap:12px;">
+            <label>SKU
+              <input name="sku" required placeholder="ITM-001"/>
+            </label>
+            <label>Name
+              <input name="name" required placeholder="Milk"/>
+            </label>
+            <div class="row">
+              <label>Unit Price
+                <input name="unitPrice" type="number" min="0" required value="0"/>
+              </label>
+              <label>Stock Qty
+                <input name="stockQty" type="number" min="0" required value="0"/>
+              </label>
+            </div>
+            <button class="btn" type="submit">Save</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2 style="margin-top:0;">Items List</h2>
+          <div class="table" style="margin-top:12px;">
+            <div class="thead" style="grid-template-columns:1.2fr 1fr 1fr 1fr;">
+              <div>SKU / Name</div>
+              <div>Unit Price</div>
+              <div>Stock</div>
+              <div>Action</div>
+            </div>
+            <div class="tbody" id="itemsTable"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-sales" class="page hidden">
+      <div class="card">
+          <h2 style="margin-top:0;">Sales for the day</h2>
+          <div style="margin-top:8px;font-weight:900;">Amount Made: <span id="dayAmountMade">0</span></div>
+        <form id="saleForm" style="margin-top:12px;display:flex;flex-direction:column;gap:12px;">
+          <div class="row">
+            <label>Sale Date
+              <input name="saleDate" type="date" required id="saleDate"/>
+            </label>
+            <div style="align-self:flex-end;">
+              <button class="btn secondary" type="button" id="addLineBtn">Add Line</button>
+            </div>
+          </div>
+
+          <div id="lines" style="display:flex;flex-direction:column;gap:10px;"></div>
+
+          <div class="row">
+            <button class="btn" type="submit">Save Sale</button>
+            <button class="btn danger" type="button" id="clearBtn">Clear</button>
+          </div>
+
+          <div style="color:rgba(0,0,0,.65);font-weight:800;">
+            If stock is not enough, it will show an error and won’t save.
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="page-monthly" class="page hidden">
+      <div class="card">
+        <h2 style="margin-top:0;">Monthly Sales</h2>
+        <div class="row" style="margin-top:12px;">
+          <label>Year
+            <input id="year" type="number" min="2000" value="2026"/>
+          </label>
+          <label>Month
+            <select id="month">
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5" selected>May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </label>
+          <button class="btn" type="button" id="loadBtn">Load</button>
+        </div>
+
+        <div class="kpis" style="margin-top:14px;">
+          <div class="kpi">
+            <div class="v" id="mTotal">0</div>
+            <div class="l">Total Revenue</div>
+          </div>
+          <div class="kpi">
+            <div class="v" id="mLines">0</div>
+            <div class="l">Items Lines Count</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
+
